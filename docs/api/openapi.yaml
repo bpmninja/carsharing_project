@@ -1,0 +1,576 @@
+openapi: 3.0.8
+info:
+    title: OpenAPI спецификация для приложения Каршеринг
+    version: 0.0.1
+    
+servers:
+    - url: http://localhost:8000/api/v1
+      description: project server 
+paths:
+  /cars:
+    get:
+      summary: метод получения всех автомобилей
+      tags: [car]
+      operationId: getAllCars
+      responses:
+        '200':  
+          description: успешный ответ со списком
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cars"
+        'default':
+          description: ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /cars/{car_id}:
+    get:
+      summary: метод получения одного автомобиля
+      tags: [car]
+      operationId: getCar
+      parameters: 
+        - name: car_id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: 9cef2ac7-1eb4-4372-8a54-69c0bb1b3fb 
+      responses:
+        '200':  
+          description: успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+        'default':
+          description: ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /users/{user_id}:
+    get:
+      summary: просмотр профиль пользователя
+      tags: [user]
+      security: 
+       - bearerAuth: []
+      parameters: 
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: успешный запрос просмотра
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponce"
+        'default':
+          description: пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      summary: изменение профиля  пользователя
+      tags: [user]
+      security:
+        - bearerAuth: []
+      parameters: 
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdateRequest"
+      responses:
+        '200':
+          description: изменение успешно
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponce"
+        '400':
+          description: ошибка в запросе
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: пользователь не найден
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: удаление пользователя
+      tags: [user]
+      security:
+        - bearerAuth: []
+      parameters: 
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer   
+      responses:
+        '204':
+          description: нет тела ответа
+        '404':
+          description: пользователь не найден
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '401':
+          description: не авторизован
+          content:
+            application/json:
+              schema:
+               $ref: '#/components/schemas/Error'
+        '403':
+          description: нет прав для удаления 
+          content:
+            application/json:
+             schema:
+               $ref: '#/components/schemas/Error'
+        
+  /registr:
+    post:
+      summary: регистрация пользователя
+      tags: [user]
+      operationId: createRegistr
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegistrUser"
+      responses:
+        '200':
+          description: успешное создание
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Massage"
+        'default':
+          description: ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /login:
+    post:
+      summary: авторизация пользователя
+      tags: [user]
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        "200":
+          description: Вход успешен. выдача токена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        "401":
+          description: Неверные данные
+          content:
+           application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+  /booking:
+    post:
+      summary: бронирование автомобиля
+      tags: [booking]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingRequest"
+      responses:
+        '200':
+          description: бронирование успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingResponce"
+        '400': 
+          description: ошибка бронирования
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /booking/{booking_id}:
+    delete:
+      summary: отмена бронирования
+      tags: [booking]
+      security:
+        - bearerAuth: []
+      parameters: 
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: бронирование отменено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Massage'
+        "401":
+          description: Бронирования не найдено
+          content:
+           application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+  /booking/{booking_id}/finish:
+    post:
+      summary: завершение поездки
+      tags: [booking]
+      security: 
+       - bearerAuth: []
+      parameters: 
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: поездка завершена
+          content:
+            apllication/json:
+              schema: 
+                $ref: "#/components/schemas/Massage"
+        'default': 
+          description: автомобиль стоит вне зооны парковки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /payment:
+    post:
+      summary: оплата за прокат автомобиля
+      tags: [payment]
+      security: 
+       - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+                $ref: "#/components/schemas/PaymentRequest"
+      responses:
+        '200': 
+          description: оплата успешно прошла
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResponce"
+        'default':
+          description: ошибка оплаты
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /payment/{payment_id}:
+    get:
+      summary: получение информации о платеже
+      tags: [payment]
+      security: 
+       - bearerAuth: []
+      parameters: 
+        - name: payment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: информация предоставлена
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/PaymentResponce"
+        'default':
+          description: информации о платеже не обнаружена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /location/{car_id}:
+    get:
+      summary: информацию о местопожелении автомобиля
+      tags: [location]
+      parameters: 
+        - name: car_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: информация получена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationResponce"
+        '404':
+          description: авто не найдено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Car:
+      type: object
+      required:
+        - model
+        - make
+        - number
+        - status
+      properties:
+        car_id:
+          type: string
+        model:
+          type: string
+          example: lada
+        make:
+          type: string
+          example: kalina
+        color:
+          type: string
+          example: green
+        number: 
+          type: string
+          example: А001МР77
+        location:
+          type: string
+        status:
+          type: string
+          enum:
+            - booked
+            - free
+            - occupied
+    Cars:
+      type: array
+      items: 
+        $ref: "#/components/schemas/Car"
+    Error:
+      type: object
+      required:
+        - code
+        - massage
+      properties:
+        code: 
+          type: integer
+          example: 404
+        massage:
+          type: string
+          example: Not found
+    RegistrUser:
+      type: object
+      required: 
+        - email
+        - password
+        - name 
+      properties:
+        name:
+         type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        phoneNumber:
+          type: string
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          example: bearer
+      required:
+        - access_token
+        - token_type
+    BookingResponce:
+      type: object
+      properties:
+        booking_id:
+          type: string
+        car_id:
+          type: string
+        user_id:
+          type: string
+        time_start:
+          type: string
+          format: date-time
+        time_stop:
+          type: string
+          format: date-time
+        tarif_id:
+          type: string
+    BookingRequest:
+      type: object
+      properties:
+        time_start:
+          type: string
+          format: date-time
+        time_stop:
+          type: string
+          format: date-time
+        car_id:
+          type: string
+    Massage:
+      type: object
+      required:
+        - massage
+      properties:
+        massage:
+          type: string
+    PaymentRequest:
+      type: object
+      properties:
+        method:
+          type: string
+          example: card
+        amount:
+          type: number
+          format: float
+          example: 75$
+        booking_id:
+          type: string
+      required: 
+        - booking_id
+        - method
+        - amount
+    PaymentResponce:
+      type: object
+      properties:
+        payment_id:
+          type: string
+        booking_id:
+          type: string
+        method:
+          type: string
+          example: card
+        amount:
+          type: number
+          format: float
+          example: 75$
+        status:
+          type: string
+          example: complited, cancelled, in the process
+        create_at:
+          type: string
+          format: date-time
+    UserResponce:
+      type: object
+      properties:
+        user_id:
+          type: string
+        name:
+          type: string
+        last_name:
+          type: string
+        phone_number:
+          type: number
+          format: string
+        docs:
+          type: string
+        email:
+          type: integer
+          format: email
+        create_at: 
+          type: integer
+          format: date-time
+    UserUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        last_name: 
+          type: string
+        email:
+          type: string
+          format: email
+        phone_number:
+          type: string
+        birthday:
+          type: string
+    LocationResponce:
+      type: object
+      properties:
+        car_id:
+          type: string
+        latitude:
+          type: string
+          format: float
+          example: 49.1221
+        longitude:
+          type: string
+          format: float
+          example: 55.7887
+        date: 
+          type: string
+          format: date-time
+        adress:
+          type: string
+          example: Республика Татарстан, город Казань
+    
+        
+        
+        
+        
+      
+        
+        
+          
+        
+      
+      
+    
+        
+        
+  
+
+
+
+
